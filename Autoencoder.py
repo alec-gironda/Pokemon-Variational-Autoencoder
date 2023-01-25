@@ -63,23 +63,36 @@ class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
 
-        self.conv_layer_1 =  nn.Conv2d(1,3,3)
+        self.conv_layer_1 =  nn.Conv2d(1,32,3)
         self.max_pool_1 = nn.MaxPool2d(3)
+
+        self.conv_layer_2 =  nn.Conv2d(32,64,3)
+        self.max_pool_2= nn.MaxPool2d(3)
+
+        self.conv_layer_3 =  nn.Conv2d(64,128,3)
+        self.max_pool_3= nn.MaxPool2d(3)
+
+        self.conv_layer_4 =  nn.Conv2d(128,256,3)
+        self.max_pool_4= nn.MaxPool2d(3)
+
         self.flatten = nn.Flatten()
 
-        self.fc_layer_1 = nn.Linear(21168,128)
+        self.fc_layer_1 = nn.Linear(8192,128)
         self.relu = nn.ReLU()
         self.fc_layer_2 = nn.Linear(128,256*256)
-
-        self.conv_layer_2 = nn.Conv2d(3,1,3)
-
-        self.fc_layer_3 = nn.Linear(82*82,256*256)
 
     def forward(self, x):
 
         x = self.conv_layer_1(x)
-
         x = self.max_pool_1(x)
+
+        x = self.conv_layer_2(x)
+        x = self.max_pool_2(x)
+
+        x = self.conv_layer_3(x)
+        x = self.max_pool_3(x)
+
+
         x = self.flatten(x)
 
         x = self.fc_layer_1(x)
