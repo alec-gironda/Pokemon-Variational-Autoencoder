@@ -67,9 +67,9 @@ class CNN(nn.Module):
         self.max_pool_1 = nn.MaxPool2d(3)
         self.flatten = nn.Flatten()
 
-        self.fc_layer_1 = nn.Linear(7056,128)
+        self.fc_layer_1 = nn.Linear(21168,128)
         self.relu = nn.ReLU()
-        self.fc_layer_2 = nn.Linear(128,7056)
+        self.fc_layer_2 = nn.Linear(128,256*256)
 
         self.conv_layer_2 = nn.Conv2d(3,1,3)
 
@@ -78,20 +78,13 @@ class CNN(nn.Module):
     def forward(self, x):
 
         x = self.conv_layer_1(x)
+
         x = self.max_pool_1(x)
         x = self.flatten(x)
 
         x = self.fc_layer_1(x)
         x = self.relu(x)
         x = self.fc_layer_2(x)
-
-        x = torch.reshape(x,(3,84,84))
-
-        x = self.conv_layer_2(x)
-
-        x = self.flatten(x)
-
-        x = self.fc_layer_3(x)
 
         return x
 
@@ -103,14 +96,14 @@ ims = torch.reshape(ims,(819,1,256,256))
 
 model = CNN()
 loss =  loss_fn # Step 2: loss
-optimizer = torch.optim.Adam(model.parameters(), lr=.001) # Step 3: training method
+optimizer = torch.optim.Adam(model.parameters(), lr=.01) # Step 3: training method
 
 train_loss_history = []
-for epoch in range(100):
+for epoch in range(1000):
     train_loss = 0.0
     optimizer.zero_grad()
-    predicted_output = model(ims[0])
-    fit = loss(ims[0],predicted_output)
+    predicted_output = model(ims)
+    fit = loss(ims,predicted_output)
     fit.backward()
     optimizer.step()
     train_loss += fit.item()
@@ -119,7 +112,8 @@ for epoch in range(100):
 print(train_loss_history[-1])
 
 
-out = model(ims[0])
+test = torch.reshape(ims[0],(1,1,256,256))
+out = model(test)
 out = torch.reshape(out,(256,256))
 
 plt.imshow(transforms.ToPILImage()(out))
