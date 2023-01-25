@@ -109,10 +109,10 @@ ims = torch.reshape(ims,(819,1,256,256))
 
 model = CNN()
 loss =  loss_fn # Step 2: loss
-optimizer = torch.optim.Adam(model.parameters(), lr=.01) # Step 3: training method
+optimizer = torch.optim.Adam(model.parameters(), lr=.001) # Step 3: training method
 
 train_loss_history = []
-for epoch in range(1000):
+for epoch in range(100):
     train_loss = 0.0
     optimizer.zero_grad()
     predicted_output = model(ims)
