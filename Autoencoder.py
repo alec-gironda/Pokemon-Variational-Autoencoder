@@ -34,34 +34,9 @@ plt.savefig("./original.jpg")
 
 import torch.nn as nn
 
-#nn architecture
-
-class FC_NN(nn.Module):
+class Encoder(nn.Module):
     def __init__(self):
-        super(FC_NN, self).__init__()
-        self.model = nn.Sequential(
-        nn.Linear(256*256,256),
-        nn.ReLU(),
-        nn.Linear(256,128),
-        nn.ReLU(),
-        nn.Linear(128,64),
-        nn.ReLU(),
-        nn.Linear(64,128),
-        nn.ReLU(),
-        nn.Linear(128,256),
-        nn.ReLU(),
-        nn.Linear(256,256*256)
-        )
-
-    def forward(self, x):
-        x = x.view(-1, 256*256)
-        return self.model(x)
-
-#nn architecture
-
-class CNN(nn.Module):
-    def __init__(self):
-        super(CNN, self).__init__()
+        super(Encoder, self).__init__()
 
         self.conv_layer_1 =  nn.Conv2d(1,32,3)
         self.max_pool_1 = nn.MaxPool2d(3)
@@ -78,8 +53,6 @@ class CNN(nn.Module):
         self.flatten = nn.Flatten()
 
         self.fc_layer_1 = nn.Linear(8192,128)
-        self.relu = nn.ReLU()
-        self.fc_layer_2 = nn.Linear(128,256*256)
 
     def forward(self, x):
 
@@ -92,33 +65,77 @@ class CNN(nn.Module):
         x = self.conv_layer_3(x)
         x = self.max_pool_3(x)
 
-
         x = self.flatten(x)
 
         x = self.fc_layer_1(x)
-        x = self.relu(x)
-        x = self.fc_layer_2(x)
 
         return x
 
+class Decoder(nn.Module):
+    def __init__(self):
+        super(Decoder, self).__init__()
+
+        self.fc_layer_1 = nn.Linear(128,16777216)
+
+
+        self.conv_layer_1 =  nn.Conv2d(256,128,3)
+        self.max_pool_1 = nn.MaxPool2d(3)
+
+        self.conv_layer_2 =  nn.Conv2d(128,64,3)
+        self.max_pool_2 = nn.MaxPool2d(3)
+
+        self.fc_layer_2 = nn.Linear(46656,65536)
+
+
+
+
+    def forward(self, x):
+
+        x = self.fc_layer_1(x)
+
+        x = torch.reshape(x,(819,256,256,256))
+
+        x = self.conv_layer_1(x)
+        x = self.max_pool_1(x)
+
+        x = self.conv_layer_2(x)
+        x = self.max_pool_2(x)
+
+        x = torch.reshape(x,(819,64*27*27))
+
+        x = self.fc_layer_2(x)
+
+        x = torch.reshape(x,(819,1,256,256))
+
+        return x
+
+
 def loss_fn(input_image,output_image):
     input_image = input_image.view(-1, 256*256)
+    output_image = output_image.view(-1, 256*256)
     return torch.sum((input_image-output_image)**2)
 
 ims = torch.reshape(ims,(819,1,256,256))
 
-model = CNN()
+encoder = Encoder()
+decoder = Decoder()
+
 loss =  loss_fn # Step 2: loss
-optimizer = torch.optim.Adam(model.parameters(), lr=.001) # Step 3: training method
+encoder_opt = torch.optim.Adam(encoder.parameters(), lr=.001) # Step 3: training method
+decoder_opt = torch.optim.Adam(decoder.parameters(), lr=.001) # Step 3: training method
+
 
 train_loss_history = []
 for epoch in range(100):
     train_loss = 0.0
-    optimizer.zero_grad()
-    predicted_output = model(ims)
-    fit = loss(ims,predicted_output)
+    encoder_opt.zero_grad()
+    decoder_opt.zero_grad()
+    encoded_out = encoder(ims)
+    decoded_out = decoder(encoded_out)
+    fit = loss(ims,decoded_out)
     fit.backward()
-    optimizer.step()
+    encoder_opt.step()
+    decoder_opt.step()
     train_loss += fit.item()
     train_loss_history.append(train_loss)
     print(f'Epoch {epoch}, Train loss {train_loss}')
