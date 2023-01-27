@@ -121,8 +121,8 @@ encoder = Encoder().to("cuda")
 decoder = Decoder(64).to("cuda")
 
 loss =  loss_fn # Step 2: loss
-encoder_opt = torch.optim.Adam(encoder.parameters(), lr=.001) # Step 3: training method
-decoder_opt = torch.optim.Adam(decoder.parameters(), lr=.001) # Step 3: training method
+encoder_opt = torch.optim.Adam(encoder.parameters(), lr=.01) # Step 3: training method
+decoder_opt = torch.optim.Adam(decoder.parameters(), lr=.01) # Step 3: training method
 
 
 train_loss_history = []
