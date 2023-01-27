@@ -70,7 +70,7 @@ class Encoder(nn.Module):
         return x
 
 class Decoder(nn.Module):
-    def __init__(self):
+    def __init__(self,batch_size):
         super(Decoder, self).__init__()
 
         self.relu = nn.ReLU()
@@ -85,6 +85,8 @@ class Decoder(nn.Module):
 
         self.flatten = nn.Flatten()
 
+        self.batch_size = batch_size
+
 
     def forward(self, x):
 
@@ -92,7 +94,7 @@ class Decoder(nn.Module):
 
         x = self.relu(x)
 
-        x = torch.reshape(x,(1,32,250,250))
+        x = torch.reshape(x,(self.batch_size,32,250,250))
 
         x = self.conv_layer_1(x)
 
@@ -102,7 +104,7 @@ class Decoder(nn.Module):
 
         x = self.flatten(x)
 
-        x = torch.reshape(x,(1,1,256,256))
+        x = torch.reshape(x,(self.batch_size,1,256,256))
 
 
         return x
@@ -116,7 +118,7 @@ def loss_fn(input_image,output_image):
 ims = torch.reshape(ims,(819,1,256,256))
 
 encoder = Encoder().to("cuda")
-decoder = Decoder().to("cuda")
+decoder = Decoder(64).to("cuda")
 
 loss =  loss_fn # Step 2: loss
 encoder_opt = torch.optim.Adam(encoder.parameters(), lr=.001) # Step 3: training method
@@ -124,13 +126,13 @@ decoder_opt = torch.optim.Adam(decoder.parameters(), lr=.001) # Step 3: training
 
 
 train_loss_history = []
-for epoch in range(100):
+for epoch in range(1500):
     train_loss = 0.0
     encoder_opt.zero_grad()
     decoder_opt.zero_grad()
-    encoded_out = encoder(ims[0].unsqueeze(0).to("cuda"))
+    encoded_out = encoder(ims[:64].to("cuda"))
     decoded_out = decoder(encoded_out)
-    fit = loss(ims[0].unsqueeze(0).to("cuda"),decoded_out)
+    fit = loss(ims[:64].to("cuda"),decoded_out)
     fit.backward()
     encoder_opt.step()
     decoder_opt.step()
@@ -140,10 +142,11 @@ for epoch in range(100):
 print(train_loss_history[-1])
 
 
-test = torch.reshape(ims[0],(1,1,256,256))
+test = ims[:64].to("cuda")
 out = encoder(test)
-out = decoder(test)
-out = torch.reshape(out,(256,256))
+out = decoder(out)
+out = torch.reshape(out,(64,256,256))
 
-plt.imshow(transforms.ToPILImage()(out))
+plt.imshow(transforms.ToPILImage()(out[0]))
 plt.savefig("./out.jpg")
+
