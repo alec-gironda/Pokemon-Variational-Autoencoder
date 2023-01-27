@@ -38,34 +38,32 @@ class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
 
-        self.conv_layer_1 =  nn.Conv2d(1,32,3)
-        self.max_pool_1 = nn.MaxPool2d(3)
+        self.relu = nn.ReLU()
 
-        self.conv_layer_2 =  nn.Conv2d(32,64,3)
-        self.max_pool_2= nn.MaxPool2d(3)
+        self.conv_layer_1 =  nn.Conv2d(1,8,3)
 
-        self.conv_layer_3 =  nn.Conv2d(64,128,3)
-        self.max_pool_3= nn.MaxPool2d(3)
+        self.conv_layer_2 =  nn.Conv2d(8,16,3)
 
-        self.conv_layer_4 =  nn.Conv2d(128,256,3)
-        self.max_pool_4= nn.MaxPool2d(3)
+        self.conv_layer_3 =  nn.Conv2d(16,32,3)
 
         self.flatten = nn.Flatten()
 
-        self.fc_layer_1 = nn.Linear(8192,128)
+        self.fc_layer_1 = nn.Linear(2000000,128)
 
     def forward(self, x):
 
         x = self.conv_layer_1(x)
-        x = self.max_pool_1(x)
+        x = self.relu(x)
 
         x = self.conv_layer_2(x)
-        x = self.max_pool_2(x)
+        x = self.relu(x)
 
         x = self.conv_layer_3(x)
-        x = self.max_pool_3(x)
+        x = self.relu(x)
 
         x = self.flatten(x)
+
+        x = self.relu(x)
 
         x = self.fc_layer_1(x)
 
@@ -75,37 +73,37 @@ class Decoder(nn.Module):
     def __init__(self):
         super(Decoder, self).__init__()
 
-        self.fc_layer_1 = nn.Linear(128,16777216)
+        self.relu = nn.ReLU()
 
+        self.fc_layer_1 = nn.Linear(128,2000000)
 
-        self.conv_layer_1 =  nn.Conv2d(256,128,3)
-        self.max_pool_1 = nn.MaxPool2d(3)
+        self.conv_layer_1 =  nn.ConvTranspose2d(32,16,3)
 
-        self.conv_layer_2 =  nn.Conv2d(128,64,3)
-        self.max_pool_2 = nn.MaxPool2d(3)
+        self.conv_layer_2 =  nn.ConvTranspose2d(16,8,3)
 
-        self.fc_layer_2 = nn.Linear(46656,65536)
+        self.conv_layer_3 =  nn.ConvTranspose2d(8,1,3)
 
-
+        self.flatten = nn.Flatten()
 
 
     def forward(self, x):
 
         x = self.fc_layer_1(x)
 
-        x = torch.reshape(x,(819,256,256,256))
+        x = self.relu(x)
+
+        x = torch.reshape(x,(1,32,250,250))
 
         x = self.conv_layer_1(x)
-        x = self.max_pool_1(x)
 
         x = self.conv_layer_2(x)
-        x = self.max_pool_2(x)
 
-        x = torch.reshape(x,(819,64*27*27))
+        x = self.conv_layer_3(x)
 
-        x = self.fc_layer_2(x)
+        x = self.flatten(x)
 
-        x = torch.reshape(x,(819,1,256,256))
+        x = torch.reshape(x,(1,1,256,256))
+
 
         return x
 
@@ -117,8 +115,8 @@ def loss_fn(input_image,output_image):
 
 ims = torch.reshape(ims,(819,1,256,256))
 
-encoder = Encoder()
-decoder = Decoder()
+encoder = Encoder().to("cuda")
+decoder = Decoder().to("cuda")
 
 loss =  loss_fn # Step 2: loss
 encoder_opt = torch.optim.Adam(encoder.parameters(), lr=.001) # Step 3: training method
@@ -130,9 +128,9 @@ for epoch in range(100):
     train_loss = 0.0
     encoder_opt.zero_grad()
     decoder_opt.zero_grad()
-    encoded_out = encoder(ims)
+    encoded_out = encoder(ims[0].unsqueeze(0).to("cuda"))
     decoded_out = decoder(encoded_out)
-    fit = loss(ims,decoded_out)
+    fit = loss(ims[0].unsqueeze(0).to("cuda"),decoded_out)
     fit.backward()
     encoder_opt.step()
     decoder_opt.step()
@@ -143,7 +141,8 @@ print(train_loss_history[-1])
 
 
 test = torch.reshape(ims[0],(1,1,256,256))
-out = model(test)
+out = encoder(test)
+out = decoder(test)
 out = torch.reshape(out,(256,256))
 
 plt.imshow(transforms.ToPILImage()(out))
