@@ -33,7 +33,7 @@ ims = ims/255
 
 print(ims.shape)
 
-plt.imshow(transforms.ToPILImage()(ims[1]))
+plt.imshow(transforms.ToPILImage()(ims[8]))
 plt.savefig("./original.png")
 
 class Encoder(nn.Module):
@@ -210,7 +210,7 @@ decoder_opt = torch.optim.Adam(decoder.parameters(), lr=.001) # Step 3: training
 # d_scheduler = torch.optim.lr_scheduler.StepLR(decoder_opt, step_size=100, gamma=0.1)
 
 train_loss_history = []
-for epoch in range(10):
+for epoch in range(10000):
   for i, curr_ims in enumerate(trainDataLoader):
     train_loss = 0.0
     encoder_opt.zero_grad()
