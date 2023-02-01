@@ -15,18 +15,15 @@ import numpy as np
 import os
 import torch.nn as nn
 
-# https://stackoverflow.com/questions/3451111/unzipping-files-in-python
 
-import zipfile
-with zipfile.ZipFile("simpsons.zip", 'r') as zip_ref:
-    zip_ref.extractall("simpsons")
+num_simpsons = len(os.listdir("./simpsons"))
 
-num_simpsons = len(os.listdir("simpsons/simpsons")[:5000])
+print(num_simpsons)
 
 ims = []
 
-for im_name in os.listdir("simpsons/simpsons")[:5000]:
-    s = (f"simpsons/simpsons/{str(im_name)}")
+for im_name in os.listdir("./simpsons"):
+    s = (f"./simpsons/{str(im_name)}")
     curr = torchvision.io.read_image(s)
     ims.append(curr)
 
@@ -192,8 +189,8 @@ def criterion(x_out, target, z_mean, z_logvar, alpha=1, beta=1):
     loss = ((alpha * bce) + (beta * kl)) / x_out.size(0)
     return loss
 
-batch_size = 40
-new_ims = ims
+batch_size = 10
+new_ims = ims[:1300]
 
 trainDataLoader = torch.utils.data.DataLoader(new_ims,batch_size=batch_size,shuffle=True)
 
@@ -245,7 +242,7 @@ plt.savefig("./out.png")
 
 torch.save(decoder.state_dict(), "./decoder_mod")
 
-decoder = Decoder(batch_size)
+decoder = Decoder(batch_size).to("cuda")
 decoder.load_state_dict(torch.load("./decoder_mod"))
 
 out = decoder(x)
