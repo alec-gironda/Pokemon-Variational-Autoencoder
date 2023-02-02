@@ -16,13 +16,13 @@ import os
 import torch.nn as nn
 
 
-num_simpsons = len(os.listdir("./simpsons"))
+num_simpsons = len(os.listdir("./simpsons")[:5000])
 
 print(num_simpsons)
 
 ims = []
 
-for im_name in os.listdir("./simpsons"):
+for im_name in os.listdir("./simpsons")[:5000]:
     s = (f"./simpsons/{str(im_name)}")
     curr = torchvision.io.read_image(s)
     ims.append(curr)
@@ -190,7 +190,7 @@ def criterion(x_out, target, z_mean, z_logvar, alpha=1, beta=1):
     return loss
 
 batch_size = 10
-new_ims = ims[:1300]
+new_ims = ims
 
 trainDataLoader = torch.utils.data.DataLoader(new_ims,batch_size=batch_size,shuffle=True)
 
@@ -210,7 +210,7 @@ decoder_opt = torch.optim.Adam(decoder.parameters(), lr=.001) # Step 3: training
 # d_scheduler = torch.optim.lr_scheduler.StepLR(decoder_opt, step_size=100, gamma=0.1)
 
 train_loss_history = []
-for epoch in range(10000):
+for epoch in range(2000):
   for i, curr_ims in enumerate(trainDataLoader):
     train_loss = 0.0
     encoder_opt.zero_grad()
